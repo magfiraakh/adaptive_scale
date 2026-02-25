@@ -1,0 +1,24 @@
+# TODO: replace paths and hyperparameters for your dataset.
+model:
+  num_classes: 1
+  with_seg: true
+  width: 32
+  uncertainty: true
+
+data:
+  root: data
+  train_ann: data/train.json
+  val_ann: data/val.json
+  test_ann: data/test.json
+  image_size: 640
+
+train:
+  epochs: 50
+  batch_size: 8
+  lr: 0.0003
+  weight_decay: 0.0001
+
+loss:
+  seg_weight: 1.0
+  scale_weight: 1.0
+  scale_loss: smooth_l1
