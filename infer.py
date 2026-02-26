@@ -1,7 +1,8 @@
+# apeakek
 from __future__ import annotations
 
 import argparse
-from typing import Dict, List
+import typing
 
 import torch
 from torch.utils.data import DataLoader
@@ -11,7 +12,7 @@ from models.yolo_scale import YOLOv11Scale
 from utils.postprocess import compute_areas_for_image, write_area_csv
 
 
-def decode_detections_placeholder(det_preds: List[torch.Tensor], image_hw: tuple[int, int]) -> List[List[Dict]]:
+def decode_detections_placeholder(det_preds: typing.List[torch.Tensor], image_hw: tuple[int, int]) -> typing.List[typing.List[typing.Dict]]:
     """Decode YOLO outputs into per-image detections.
 
     TODO: implement proper anchor/grid decoding + NMS.
