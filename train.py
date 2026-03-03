@@ -38,6 +38,7 @@ def main():
         args.train_ann,
         use_segmentation=args.with_seg,
         require_mpp=(args.scale_weight > 0),
+        default_mpp=1.0,   # nilai dummy (tidak dipakai kalau scale_weight=0)
     )
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4, collate_fn=collate_fn)
 
