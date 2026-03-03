@@ -50,16 +50,28 @@ def main():
         for batch in loader:
             images = batch["images"].to(args.device)
             out = model(images)
-            decoded = decode_detections_placeholder(out.det_preds, image_hw=images.shape[-2:])
+
+            # seg logits wajib aktif
+            if out.seg_logits is None:
+                raise ValueError("seg_logits None. Jalankan infer dengan --with-seg dan pastikan model with_seg=True.")
+
+            probs = torch.sigmoid(out.seg_logits)  # [B,1,H,W]
+            masks = (probs > args.seg_thresh).float()  # [B,1,H,W]
+            area_px = masks.sum(dim=(2,3)).squeeze(1)  # [B]
+
             for i, image_id in enumerate(batch["image_ids"]):
-                rows.extend(
-                    compute_areas_for_image(
-                        image_id=image_id,
-                        dets=decoded[i],
-                        mpp_pred=float(out.mpp[i].item()),
-                        image_hw=tuple(images.shape[-2:]),
-                    )
-                )
+                mpp_pred = float(out.mpp[i].item())
+                area_px_i = float(area_px[i].item())
+                area_m2 = area_px_i * (mpp_pred ** 2)
+
+                rows.append({
+                    "image_id": image_id,
+                    "pothole_id": 0,
+                    "conf": 1.0,
+                    "area_px": area_px_i,
+                    "mpp_pred": mpp_pred,
+                    "area_m2_pred": area_m2,
+                })
 
     write_area_csv(rows, args.out_csv)
     print(f"wrote {len(rows)} pothole rows to {args.out_csv}")
