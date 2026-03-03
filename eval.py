@@ -45,11 +45,10 @@ def main():
         for batch in loader:
             images = batch["images"].to(args.device)
             out = model(images)
-            if not args.skip_mpp:
-                mpp_pred = out.mpp.detach().cpu().numpy()
-                mpp_gt = batch["mpp"].numpy()
-                mpp_pred_all.append(mpp_pred)
-                mpp_gt_all.append(mpp_gt)
+            mpp_pred = out.mpp.detach().cpu().numpy()
+            mpp_gt = batch["mpp"].numpy()
+            mpp_pred_all.append(mpp_pred)
+            mpp_gt_all.append(mpp_gt)
 
             # Area eval proxy: if object gt area exists, project via global mpp.
             for i, gt_areas in enumerate(batch["gt_area_m2"]):
@@ -59,9 +58,12 @@ def main():
                 # TODO: replace placeholder with decoded instance masks from predictions.
                 area_pred_all.extend([float(a) for a in gt_areas.numpy()])
 
-    mpp_pred_all = np.concatenate(mpp_pred_all)
-    mpp_gt_all = np.concatenate(mpp_gt_all)
-
+    if not args.skip_mpp:
+        mpp_pred_all = np.concatenate(mpp_pred_all)
+        mpp_gt_all = np.concatenate(mpp_gt_all)
+        mpp_metrics = regression_metrics(mpp_pred_all, mpp_gt_all)
+    else:
+        mpp_metrics = {"mae": -1.0, "rmse": -1.0, "mape": -1.0}
     det_metrics = placeholder_map()
     mpp_metrics = regression_metrics(mpp_pred_all, mpp_gt_all)
     if area_gt_all:
