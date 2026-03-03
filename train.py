@@ -23,6 +23,8 @@ def parse_args():
     p.add_argument("--with-seg", action="store_true")
     p.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     p.add_argument("--save-dir", type=str, default="runs/train")
+    p.add_argument("--seg-weight", type=float, default=1.0)
+    p.add_argument("--scale-weight", type=float, default=1.0)
     return p.parse_args()
 
 
@@ -31,18 +33,24 @@ def main():
     save_dir = Path(args.save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
 
-    dataset = PotholeDataset(args.data_root, args.train_ann, use_segmentation=args.with_seg)
+    dataset = PotholeDataset(
+        args.data_root,
+        args.train_ann,
+        use_segmentation=args.with_seg,
+        require_mpp=(args.scale_weight > 0),
+    )
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4, collate_fn=collate_fn)
 
     model = YOLOv11Scale(num_classes=args.num_classes, with_seg=args.with_seg).to(args.device)
-    criterion = MultiTaskLoss(seg_weight=1.0, scale_weight=1.0, use_uncertainty=True)
+    criterion = MultiTaskLoss(seg_weight=args.seg_weight, scale_weight=args.scale_weight, use_uncertainty=True)
     optim = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
 
     model.train()
     for epoch in range(args.epochs):
         for batch in loader:
             batch["images"] = batch["images"].to(args.device)
-            batch["mpp"] = batch["mpp"].to(args.device)
+            if args.scale_weight > 0:
+                batch["mpp"] = batch["mpp"].to(args.device) 
             outputs = model(batch["images"])
             losses = criterion(outputs, batch)
 

@@ -19,12 +19,18 @@ def parse_args():
     p.add_argument("--num-classes", type=int, default=1)
     p.add_argument("--with-seg", action="store_true")
     p.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
+    p.add_argument("--skip-mpp", action="store_true")
     return p.parse_args()
 
 
 def main():
     args = parse_args()
-    dataset = PotholeDataset(args.data_root, args.val_ann, use_segmentation=args.with_seg)
+    dataset = PotholeDataset(
+        args.data_root,
+        args.val_ann,
+        use_segmentation=args.with_seg,
+        require_mpp=(not args.skip_mpp),
+    )
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=4, collate_fn=collate_fn)
 
     model = YOLOv11Scale(num_classes=args.num_classes, with_seg=args.with_seg).to(args.device)
@@ -39,10 +45,11 @@ def main():
         for batch in loader:
             images = batch["images"].to(args.device)
             out = model(images)
-            mpp_pred = out.mpp.detach().cpu().numpy()
-            mpp_gt = batch["mpp"].numpy()
-            mpp_pred_all.append(mpp_pred)
-            mpp_gt_all.append(mpp_gt)
+            if not args.skip_mpp:
+                mpp_pred = out.mpp.detach().cpu().numpy()
+                mpp_gt = batch["mpp"].numpy()
+                mpp_pred_all.append(mpp_pred)
+                mpp_gt_all.append(mpp_gt)
 
             # Area eval proxy: if object gt area exists, project via global mpp.
             for i, gt_areas in enumerate(batch["gt_area_m2"]):
