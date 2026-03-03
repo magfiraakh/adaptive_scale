@@ -32,6 +32,7 @@ def parse_args():
     p.add_argument("--with-seg", action="store_true")
     p.add_argument("--out-csv", type=str, default="runs/infer/pothole_areas.csv")
     p.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
+    p.add_argument("--seg-thresh", type=float, default=0.5)
     return p.parse_args()
 
 
@@ -55,9 +56,9 @@ def main():
             if out.seg_logits is None:
                 raise ValueError("seg_logits None. Jalankan infer dengan --with-seg dan pastikan model with_seg=True.")
 
-            probs = torch.sigmoid(out.seg_logits)  # [B,1,H,W]
-            masks = (probs > args.seg_thresh).float()  # [B,1,H,W]
-            area_px = masks.sum(dim=(2,3)).squeeze(1)  # [B]
+            probs = torch.sigmoid(out.seg_logits)
+            masks = (probs > args.seg_thresh).float()
+            area_px = masks.sum(dim=(2,3)).squeeze(1)
 
             for i, image_id in enumerate(batch["image_ids"]):
                 mpp_pred = float(out.mpp[i].item())
