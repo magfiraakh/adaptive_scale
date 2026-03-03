@@ -56,15 +56,25 @@ def _coco_bbox_to_xyxy(bbox: List[float]) -> Tuple[float, float, float, float]:
     return x, y, x + bw, y + bh
 
 
-def _rasterize_polygon_xy(polygon_xy: List[float], width: int, height: int) -> np.ndarray:
+def _rasterize_polygon_xy(polygon_xy, width: int, height: int) -> np.ndarray:
     """
-    polygon_xy: [x1,y1,x2,y2,...] in image pixel coords.
+    Supports:
+      - [[x,y],[x,y],...]  (your current annotations)
+      - [x1,y1,x2,y2,...]  (flat)
     Returns mask (H,W) with {0,1}.
     """
-    if polygon_xy is None or len(polygon_xy) < 6:
+    if not polygon_xy or len(polygon_xy) < 3:
         return np.zeros((height, width), dtype=np.float32)
 
-    pts = [(float(polygon_xy[i]), float(polygon_xy[i + 1])) for i in range(0, len(polygon_xy), 2)]
+    # list-of-pairs
+    if isinstance(polygon_xy[0], (list, tuple)) and len(polygon_xy[0]) == 2:
+        pts = [(float(x), float(y)) for x, y in polygon_xy]
+    else:
+        # flat list
+        if len(polygon_xy) < 6:
+            return np.zeros((height, width), dtype=np.float32)
+        pts = [(float(polygon_xy[i]), float(polygon_xy[i + 1])) for i in range(0, len(polygon_xy), 2)]
+
     img = Image.new("L", (width, height), 0)
     draw = ImageDraw.Draw(img)
     draw.polygon(pts, outline=1, fill=1)
