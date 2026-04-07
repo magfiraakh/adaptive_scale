@@ -7,9 +7,9 @@ import torch
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 
-from datasets.pothole_dataset import PotholeDataset, collate_fn
+from src.adaptive_scale.datasets.pothole_dataset import PotholeDataset, collate_fn
 from models.yolo_scale import YOLOv11Scale
-from utils.losses import MultiTaskLoss
+from src.adaptive_scale.utils.losses import MultiTaskLoss
 
 
 def parse_args():

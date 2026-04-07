@@ -5,9 +5,9 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from datasets.pothole_dataset import PotholeDataset, collate_fn
+from src.adaptive_scale.datasets.pothole_dataset import PotholeDataset, collate_fn
 from models.yolo_scale import YOLOv11Scale
-from utils.metrics import placeholder_map, regression_metrics
+from src.adaptive_scale.utils.metrics import placeholder_map, regression_metrics
 
 
 def parse_args():
