@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 
 from src.adaptive_scale.datasets.pothole_dataset import PotholeDataset, collate_fn
 from models.yolo_scale import YOLOv11Scale
-from src.adaptive_scale.utils.metrics import placeholder_map, regression_metrics
+from src.adaptive_scale.evaluation.metrics import placeholder_map, regression_metrics
 
 
 def parse_args():
